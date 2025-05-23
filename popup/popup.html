@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Image Downloader Pro</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Image Downloader Pro</h1>
+        <div class="status" id="status">พร้อมใช้งาน</div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section">
+        <h3>⚡ Quick Actions</h3>
+        <div class="button-group">
+            <button id="scanPage" class="btn primary">สแกนหน้านี้</button>
+            <button id="deepScan" class="btn secondary">Deep Scan</button>
+            <button id="downloadAll" class="btn success">ดาวน์โหลดทั้งหมด</button>
+        </div>
+    </div>
+
+    <!-- Image Stats -->
+    <div class="section">
+        <div class="stats-grid">
+            <div class="stat">
+                <span class="stat-label">ภาพที่พบ</span>
+                <span class="stat-value" id="imageCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">หน้าที่สแกน</span>
+                <span class="stat-value" id="pageCount">1</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">ขนาดรวม</span>
+                <span class="stat-value" id="totalSize">0 MB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Settings -->
+    <div class="section">
+        <h3>🎛️ ตัวกรอง & การตั้งค่า</h3>
+        
+        <!-- File Type Filter -->
+        <div class="filter-group">
+            <label>ประเภทไฟล์:</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="jpg" checked> JPG</label>
+                <label><input type="checkbox" id="png" checked> PNG</label>
+                <label><input type="checkbox" id="webp" checked> WebP</label>
+                <label><input type="checkbox" id="gif" checked> GIF</label>
+                <label><input type="checkbox" id="svg"> SVG</label>
+                <label><input type="checkbox" id="blob" checked> Blob/Canvas</label>
+            </div>
+        </div>
+
+        <!-- Size Filter -->
+        <div class="filter-group">
+            <label>ขนาดขั้นต่ำ:</label>
+            <div class="size-inputs">
+                <input type="number" id="minWidth" placeholder="กว้าง" min="1" value="100">
+                <span>×</span>
+                <input type="number" id="minHeight" placeholder="สูง" min="1" value="100">
+                <span>px</span>
+            </div>
+        </div>
+
+        <!-- Deep Scan Settings -->
+        <div class="filter-group">
+            <label>Deep Scan:</label>
+            <div class="range-group">
+                <label>ความลึก: <span id="depthValue">2</span> ระดับ</label>
+                <input type="range" id="scanDepth" min="1" max="5" value="2">
+            </div>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="followPagination" checked> ตามลิงก์หน้าถัดไป</label>
+                <label><input type="checkbox" id="followGallery" checked> ตามลิงก์แกลเลอรี่</label>
+                <label><input type="checkbox" id="infiniteScroll" checked> จัดการ Infinite Scroll</label>
+            </div>
+        </div>
+
+        <!-- Download Settings -->
+        <div class="filter-group">
+            <label>การดาวน์โหลด:</label>
+            <div class="download-settings">
+                <label><input type="checkbox" id="createSubfolder" checked> สร้างโฟลเดอร์ย่อย</label>
+                <input type="text" id="folderName" placeholder="ชื่อโฟลเดอร์ (auto)" class="folder-input">
+                <select id="namingPattern" class="naming-select">
+                    <option value="original">ชื่อเดิม</option>
+                    <option value="numbered">เลขลำดับ</option>
+                    <option value="timestamp">วันเวลา</option>
+                    <option value="custom">กำหนดเอง</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Options -->
+    <div class="section collapsible">
+        <h3>⚙️ ตั้งค่าขั้นสูง <span class="toggle">▼</span></h3>
+        <div class="advanced-content">
+            <!-- Concurrent Downloads -->
+            <div class="filter-group">
+                <label>ดาวน์โหลดพร้อมกัน: <span id="concurrentValue">3</span> ไฟล์</label>
+                <input type="range" id="concurrentDownloads" min="1" max="10" value="3">
+            </div>
+
+            <!-- Retry Settings -->
+            <div class="filter-group">
+                <label>ลองใหม่เมื่อล้มเหลว: <span id="retryValue">3</span> ครั้ง</label>
+                <input type="range" id="retryAttempts" min="0" max="5" value="3">
+            </div>
+
+            <!-- Site-specific Patterns -->
+            <div class="filter-group">
+                <label>Pattern เฉพาะเว็บ:</label>
+                <textarea id="customPatterns" placeholder="CSS Selector หรือ XPath (ทีละบอร์ด)" rows="3"></textarea>
+            </div>
+
+            <!-- Debug Mode -->
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="debugMode"> โหมด Debug</label>
+                <label><input type="checkbox" id="showProgress" checked> แสดงความคืบหน้า</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="section" id="progressSection" style="display: none;">
+        <h3>📊 ความคืบหน้า</h3>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 0</div>
+        </div>
+        <div class="log-container" id="logContainer"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="section">
+        <div class="button-group">
+            <button id="saveSettings" class="btn outline">บันทึกการตั้งค่า</button>
+            <button id="resetSettings" class="btn outline">รีเซ็ต</button>
+            <button id="exportResults" class="btn outline">ส่งออกรายการ</button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

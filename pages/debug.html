@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Image Downloader - Debug Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .debug-header {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            padding: 15px 20px;
+            border-bottom: 2px solid #4facfe;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debug-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .debug-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .debug-btn {
+            padding: 8px 15px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .debug-btn:hover {
+            background: #3d8bfe;
+        }
+
+        .debug-btn.danger {
+            background: #e53e3e;
+        }
+
+        .debug-btn.danger:hover {
+            background: #c53030;
+        }
+
+        .debug-content {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        .debug-sidebar {
+            width: 250px;
+            background: #2d3748;
+            border-right: 1px solid #4a5568;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .debug-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .debug-tabs {
+            display: flex;
+            background: #2d3748;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .debug-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            color: #a0aec0;
+        }
+
+        .debug-tab.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: #1a202c;
+        }
+
+        .debug-tab:hover {
+            background: #374151;
+        }
+
+        .debug-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #1a202c;
+            display: none;
+        }
+
+        .debug-panel.active {
+            display: block;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            color: #4facfe;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #374151;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.green { background: #10b981; }
+        .status-dot.yellow { background: #f59e0b; }
+        .status-dot.red { background: #ef4444; }
+
+        .log-container {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid transparent;
+        }
+
+        .log-entry.info { border-left-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .log-entry.warn { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .log-entry.error { border-left-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .log-entry.success { border-left-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+        .log-timestamp {
+            color: #6b7280;
+            font-size: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #374151;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #4a5568;
+        }
+
+        .metric-title {
+            color: #4facfe;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            color: #e0e0e0;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .test-suite {
+            background: #374151;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #4a5568;
+        }
+
+        .test-suite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .test-suite-title {
+            color: #4facfe;
+            font-weight: bold;
+        }
+
+        .test-suite-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .test-suite-status.passed { background: #065f46; color: #10b981; }
+        .test-suite-status.failed { background: #7f1d1d; color: #ef4444; }
+        .test-suite-status.running { background: #78350f; color: #f59e0b; }
+
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-name {
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .test-result {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .test-result.pass { background: #065f46; color: #10b981; }
+        .test-result.fail { background: #7f1d1d; color: #ef4444; }
+
+        .error-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error-item {
+            background: #374151;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ef4444;
+        }
+
+        .error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .error-type {
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .error-time {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .error-message {
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .error-stack {
+            background: #111827;
+            padding: 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #9ca3af;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .performance-chart {
+            background: #374151;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            height: 200px;
+            position: relative;
+        }
+
+        .chart-title {
+            color: #4facfe;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .command-input {
+            background: #111827;
+            border: 1px solid #374151;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .command-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .command-history {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .command-entry {
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .command-input-line {
+            color: #4facfe;
+        }
+
+        .command-output {
+            color: #10b981;
+            margin-left: 10px;
+        }
+
+        .command-error {
+            color: #ef4444;
+            margin-left: 10px;
+        }
+
+        .feedback-form {
+            background: #374151;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            color: #4facfe;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: #111827;
+            border: 1px solid #4a5568;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-button {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .form-button:hover {
+            background: #3d8bfe;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #374151;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-header">
+        <div class="debug-title">🐛 Advanced Image Downloader - Debug Console</div>
+        <div class="debug-controls">
+            <button class="debug-btn" onclick="runFullTest()">Run Tests</button>
+            <button class="debug-btn" onclick="exportLogs()">Export Logs</button>
+            <button class="debug-btn danger" onclick="clearAllData()">Clear All</button>
+        </div>
+    </div>
+
+    <div class="debug-content">
+        <div class="debug-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">System Status</div>
+                <div class="status-indicator">
+                    <div class="status-dot green" id="extensionStatus"></div>
+                    <span>Extension</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot yellow" id="scannerStatus"></div>
+                    <span>Scanner</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot green" id="storageStatus"></div>
+                    <span>Storage</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot red" id="networkStatus"></div>
+                    <span>Network</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Quick Stats</div>
+                <div style="color: #e0e0e0; font-size: 12px;">
+                    <div style="margin-bottom: 5px;">Uptime: <span id="uptime">--</span></div>
+                    <div style="margin-bottom: 5px;">Memory: <span id="memoryUsage">--</span></div>
+                    <div style="margin-bottom: 5px;">Errors: <span id="errorCount">--</span></div>
+                    <div>Tests: <span id="testStatus">--</span></div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Recent Activity</div>
+                <div class="log-container" id="recentActivity" style="height: 150px;">
+                    <!-- Recent activity logs will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-main">
+            <div class="debug-tabs">
+                <div class="debug-tab active" data-tab="overview">Overview</div>
+                <div class="debug-tab" data-tab="tests">Tests</div>
+                <div class="debug-tab" data-tab="errors">Errors</div>
+                <div class="debug-tab" data-tab="performance">Performance</div>
+                <div class="debug-tab" data-tab="console">Console</div>
+                <div class="debug-tab" data-tab="feedback">Feedback</div>
+            </div>
+
+            <!-- Overview Panel -->
+            <div class="debug-panel active" id="overview-panel">
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">System Health</div>
+                        <div class="metric-value" id="healthScore">98%</div>
+                        <div class="metric-label">Overall health score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Images Processed</div>
+                        <div class="metric-value" id="imagesProcessed">1,247</div>
+                        <div class="metric-label">Since last restart</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Success Rate</div>
+                        <div class="metric-value" id="successRate">94.2%</div>
+                        <div class="metric-label">Download success rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Response Time</div>
+                        <div class="metric-value" id="responseTime">142ms</div>
+                        <div class="metric-label">Average response time</div>
+                    </div>
+                </div>
+
+                <h3 style="color: #4facfe; margin-bottom: 15px;">System Components</h3>
+                <div class="log-container" id="systemLogs">
+                    <div class="log-entry info">
+                        <span class="log-timestamp">[12:34:56]</span> Content Scanner initialized successfully
+                    </div>
+                    <div class="log-entry success">
+                        <span class="log-timestamp">[12:34:57]</span> Storage Manager connected
+                    </div>
+                    <div class="log-entry info">
+                        <span class="log-timestamp">[12:34:58]</span> Site patterns loaded (15 patterns)
+                    </div>
+                    <div class="log-entry warn">
+                        <span class="log-timestamp">[12:35:12]</span> High memory usage detected (78%)
+                    </div>
+                    <div class="log-entry info">
+                        <span class="log-timestamp">[12:35:15]</span> Performance optimization applied
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tests Panel -->
+            <div class="debug-panel" id="tests-panel">
+                <div style="margin-bottom: 20px;">
+                    <button class="debug-btn" onclick="runAllTests()">Run All Tests</button>
+                    <button class="debug-btn" onclick="runCompatibilityTests()">Compatibility Tests</button>
+                    <button class="debug-btn" onclick="runPerformanceTests()">Performance Tests</button>
+                </div>
+
+                <div class="test-grid" id="testResults">
+                    <!-- Test results will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Errors Panel -->
+            <div class="debug-panel" id="errors-panel">
+                <div style="margin-bottom: 20px;">
+                    <button class="debug-btn" onclick="clearErrors()">Clear Errors</button>
+                    <button class="debug-btn" onclick="exportErrors()">Export Errors</button>
+                </div>
+
+                <div class="error-list" id="errorList">
+                    <!-- Error items will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Performance Panel -->
+            <div class="debug-panel" id="performance-panel">
+                <div class="performance-chart">
+                    <div class="chart-title">Memory Usage Over Time</div>
+                    <div class="chart-placeholder">Memory usage chart will be displayed here</div>
+                </div>
+
+                <div class="performance-chart">
+                    <div class="chart-title">Network Activity</div>
+                    <div class="chart-placeholder">Network activity chart will be displayed here</div>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Peak Memory</div>
+                        <div class="metric-value">47.2 MB</div>
+                        <div class="metric-label">Highest recorded usage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Network Requests</div>
+                        <div class="metric-value">1,456</div>
+                        <div class="metric-label">Total requests made</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Console Panel -->
+            <div class="debug-panel" id="console-panel">
+                <div style="margin-bottom: 10px;">
+                    <input type="text" class="command-input" id="commandInput" placeholder="Enter debug command..." onkeypress="handleCommandInput(event)">
+                </div>
+
+                <div class="command-history" id="commandHistory">
+                    <div class="command-entry">
+                        <div class="command-input-line">$ help</div>
+                        <div class="command-output">Available commands: test, clear, status, export, memory, errors</div>
+                    </div>
+                    <div class="command-entry">
+                        <div class="command-input-line">$ status</div>
+                        <div class="command-output">System status: All components operational</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Panel -->
+            <div class="debug-panel" id="feedback-panel">
+                <div class="feedback-form">
+                    <h3 style="color: #4facfe; margin-bottom: 15px;">Submit Bug Report</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Issue Type</label>
+                        <select class="form-select" id="issueType">
+                            <option value="bug">Bug Report</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="performance">Performance Issue</option>
+                            <option value="compatibility">Site Compatibility</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Website URL</label>
+                        <input type="url" class="form-input" id="websiteUrl" placeholder="https://example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Browser</label>
+                        <input type="text" class="form-input" id="browserInfo" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="issueDescription" placeholder="Please describe the issue in detail..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="includeLogs" checked> Include debug logs
+                        </label>
+                    </div>
+
+                    <button class="form-button" onclick="submitFeedback()">Submit Report</button>
+                </div>
+
+                <div class="feedback-form">
+                    <h3 style="color: #4facfe; margin-bottom: 15px;">Recent Feedback</h3>
+                    <div id="recentFeedback">
+                        <p style="color: #6b7280; font-style: italic;">No feedback submitted yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================== DEBUG CONSOLE CONTROLLER ==================
+        class DebugConsoleController {
+            constructor() {
+                this.logs = [];
+                this.errors = [];
+                this.testResults = new Map();
+                this.performanceData = [];
+                this.commandHistory = [];
+                
+                this.startTime = Date.now();
+                this.updateInterval = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.initializeBrowserInfo();
+                this.startPeriodicUpdates();
+                this.loadStoredData();
+                
+                console.log('🐛 Debug Console initialized');
+            }
+            
+            setupEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.debug-tab').forEach(tab => {
+                    tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+                });
+                
+                // Command input
+                document.getElementById('commandInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.executeCommand(e.target.value);
+                        e.target.value = '';
+                    }
+                });
+                
+                // Global error handling
+                window.addEventListener('error', (event) => {
+                    this.addError({
+                        type: 'JavaScript Error',
+                        message: event.message,
+                        filename: event.filename,
+                        lineno: event.lineno,
+                        stack: event.error?.stack,
+                        timestamp: Date.now()
+                    });
+                });
+                
+                window.addEventListener('unhandledrejection', (event) => {
+                    this.addError({
+                        type: 'Promise Rejection',
+                        message: event.reason?.toString(),
+                        stack: event.reason?.stack,
+                        timestamp: Date.now()
+                    });
+                });
+            }
+            
+            initializeBrowserInfo() {
+                const browserInfo = `${navigator.userAgent} (${navigator.platform})`;
+                document.getElementById('browserInfo').value = browserInfo;
+            }
+            
+            startPeriodicUpdates() {
+                this.updateInterval = setInterval(() => {
+                    this.updateStats();
+                    this.updateSystemStatus();
+                }, 1000);
+            }
+            
+            // ================== TAB MANAGEMENT ==================
+            switchTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.debug-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                // Update panels
+                document.querySelectorAll('.debug-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById(`${tabName}-panel`).classList.add('active');
+                
+                // Load panel-specific data
+                this.loadPanelData(tabName);
+            }
+            
+            loadPanelData(tabName) {
+                switch (tabName) {
+                    case 'tests':
+                        this.loadTestResults();
+                        break;
+                    case 'errors':
+                        this.loadErrorList();
+                        break;
+                    case 'performance':
+                        this.loadPerformanceData();
+                        break;
+                    case 'console':
+                        this.loadCommandHistory();
+                        break;
+                }
+            }
+            
+            // ================== STATS UPDATES ==================
+            updateStats() {
+                // Update uptime
+                const uptime = Date.now() - this.startTime;
+                document.getElementById('uptime').textContent = this.formatDuration(uptime);
+                
+                // Update memory usage
+                if (performance.memory) {
+                    const memoryMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+                    document.getElementById('memoryUsage').textContent = `${memoryMB} MB`;
+                }
+                
+                // Update error count
+                document.getElementById('errorCount').textContent = this.errors.length;
+                
+                // Update test status
+                const totalTests = Array.from(this.testResults.values()).reduce((sum, suite) => sum + suite.total, 0);
+                const passedTests = Array.from(this.testResults.values()).reduce((sum, suite) => sum + suite.passed, 0);
+                document.getElementById('testStatus').textContent = `${passedTests}/${totalTests}`;
+            }
+            
+            updateSystemStatus() {
+                // This would typically check actual system status
+                // For demo purposes, we'll simulate status changes
+                
+                const statusElements = {
+                    extensionStatus: Math.random() > 0.1 ? 'green' : 'red',
+                    scannerStatus: Math.random() > 0.2 ? 'green' : 'yellow',
+                    storageStatus: Math.random() > 0.05 ? 'green' : 'red',
+                    networkStatus: navigator.onLine ? 'green' : 'red'
+                };
+                
+                Object.entries(statusElements).forEach(([id, status]) => {
+                    const element = document.getElementById(id);
+                    element.className = `status-dot ${status}`;
+                });
+            }
+            
+            // ================== LOGGING ==================
+            addLog(type, message) {
+                const log = {
+                    type,
+                    message,
+                    timestamp: Date.now()
+                };
+                
+                this.logs.push(log);
+                
+                // Keep only last 100 logs
+                if (this.logs.length > 100) {
+                    this.logs.shift();
+                }
+                
+                this.updateRecentActivity();
+                this.updateSystemLogs();
+            }
+            
+            addError(errorData) {
+                this.errors.push(errorData);
+                
+                // Keep only last 50 errors
+                if (this.errors.length > 50) {
+                    this.errors.shift();
+                }
+                
+                this.addLog('error', `${errorData.type}: ${errorData.message}`);
+                this.updateErrorList();
+            }
+            
+            updateRecentActivity() {
+                const container = document.getElementById('recentActivity');
+                const recentLogs = this.logs.slice(-10).reverse();
+                
+                container.innerHTML = recentLogs.map(log => `
+                    <div class="log-entry ${log.type}">
+                        <span class="log-timestamp">[${this.formatTime(log.timestamp)}]</span>
+                        ${log.message}
+                    </div>
+                `).join('');
+            }
+            
+            updateSystemLogs() {
+                const container = document.getElementById('systemLogs');
+                const systemLogs = this.logs.slice(-20).reverse();
+                
+                container.innerHTML = systemLogs.map(log => `
+                    <div class="log-entry ${log.type}">
+                        <span class="log-timestamp">[${this.formatTime(log.timestamp)}]</span>
+                        ${log.message}
+                    </div>
+                `).join('');
+                
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            // ================== TESTING ==================
+            async runAllTests() {
+                this.addLog('info', 'Starting comprehensive test suite...');
+                
+                try {
+                    if (window.siteCompatibilityTester) {
+                        const results = await window.siteCompatibilityTester.runAllTests();
+                        this.processTestResults(results);
+                        this.addLog('success', `Tests completed: ${results.overall.passed}/${results.overall.total} passed`);
+                    } else {
+                        this.addLog('error', 'Site compatibility tester not available');
+                    }
+                } catch (error) {
+                    this.addLog('error', `Test execution failed: ${error.message}`);
+                    this.addError({
+                        type: 'Test Execution Error',
+                        message: error.message,
+                        stack: error.stack,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+            
+            processTestResults(results) {
+                for (const [suiteId, suite] of Object.entries(results.suites)) {
+                    this.testResults.set(suiteId, {
+                        name: suite.name || suiteId,
+                        status: suite.status,
+                        passed: suite.passed,
+                        failed: suite.failed,
+                        total: suite.total,
+                        duration: suite.duration,
+                        tests: suite.tests || {}
+                    });
+                }
+                
+                this.loadTestResults();
+            }
+            
+            loadTestResults() {
+                const container = document.getElementById('testResults');
+                
+                if (this.testResults.size === 0) {
+                    container.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1 / -1;">No test results available. Click "Run All Tests" to start testing.</p>';
+                    return;
+                }
+                
+                container.innerHTML = Array.from(this.testResults.entries()).map(([suiteId, suite]) => `
+                    <div class="test-suite">
+                        <div class="test-suite-header">
+                            <div class="test-suite-title">${suite.name}</div>
+                            <div class="test-suite-status ${suite.status}">${suite.status}</div>
+                        </div>
+                        <div style="margin-bottom: 10px; color: #9ca3af; font-size: 12px;">
+                            ${suite.passed}/${suite.total} passed • ${suite.duration}ms
+                        </div>
+                        <div>
+                            ${Object.entries(suite.tests).map(([testName, test]) => `
+                                <div class="test-item">
+                                    <div class="test-name">${testName}</div>
+                                    <div class="test-result ${test.passed ? 'pass' : 'fail'}">
+                                        ${test.passed ? 'PASS' : 'FAIL'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // ================== ERROR MANAGEMENT ==================
+            loadErrorList() {
+                const container = document.getElementById('errorList');
+                
+                if (this.errors.length === 0) {
+                    container.innerHTML = '<p style="color: #6b7280; text-align: center;">No errors recorded.</p>';
+                    return;
+                }
+                
+                container.innerHTML = this.errors.slice().reverse().map(error => `
+                    <div class="error-item">
+                        <div class="error-header">
+                            <div class="error-type">${error.type}</div>
+                            <div class="error-time">${this.formatTime(error.timestamp)}</div>
+                        </div>
+                        <div class="error-message">${error.message}</div>
+                        ${error.stack ? `<div class="error-stack">${error.stack}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            updateErrorList() {
+                if (document.getElementById('errors-panel').classList.contains('active')) {
+                    this.loadErrorList();
+                }
+            }
+            
+            clearErrors() {
+                this.errors = [];
+                this.loadErrorList();
+                this.addLog('info', 'Error list cleared');
+            }
+            
+            // ================== PERFORMANCE MONITORING ==================
+            loadPerformanceData() {
+                // Simulate performance data collection
+                this.collectPerformanceMetrics();
+            }
+            
+            collectPerformanceMetrics() {
+                const metrics = {
+                    timestamp: Date.now(),
+                    memory: performance.memory ? {
+                        used: performance.memory.usedJSHeapSize,
+                        total: performance.memory.totalJSHeapSize,
+                        limit: performance.memory.jsHeapSizeLimit
+                    } : null,
+                    navigation: performance.navigation ? {
+                        type: performance.navigation.type,
+                        redirectCount: performance.navigation.redirectCount
+                    } : null
+                };
+                
+                this.performanceData.push(metrics);
+                
+                // Keep only last 100 measurements
+                if (this.performanceData.length > 100) {
+                    this.performanceData.shift();
+                }
+            }
+            
+            // ================== COMMAND CONSOLE ==================
+            executeCommand(command) {
+                const trimmedCommand = command.trim();
+                if (!trimmedCommand) return;
+                
+                this.commandHistory.push({
+                    input: trimmedCommand,
+                    timestamp: Date.now(),
+                    output: null,
+                    error: null
+                });
+                
+                try {
+                    const output = this.processCommand(trimmedCommand);
+                    this.commandHistory[this.commandHistory.length - 1].output = output;
+                    this.addLog('info', `Command executed: ${trimmedCommand}`);
+                } catch (error) {
+                    this.commandHistory[this.commandHistory.length - 1].error = error.message;
+                    this.addLog('error', `Command failed: ${trimmedCommand} - ${error.message}`);
+                }
+                
+                this.updateCommandHistory();
+            }
+            
+            processCommand(command) {
+                const [cmd, ...args] = command.split(' ');
+                
+                switch (cmd.toLowerCase()) {
+                    case 'help':
+                        return 'Available commands: test, clear, status, export, memory, errors, scan, debug';
+                        
+                    case 'test':
+                        if (args[0] === 'run') {
+                            this.runAllTests();
+                            return 'Tests started...';
+                        }
+                        return 'Usage: test run';
+                        
+                    case 'clear':
+                        if (args[0] === 'errors') {
+                            this.clearErrors();
+                            return 'Errors cleared';
+                        } else if (args[0] === 'logs') {
+                            this.logs = [];
+                            this.updateRecentActivity();
+                            this.updateSystemLogs();
+                            return 'Logs cleared';
+                        }
+                        return 'Usage: clear [errors|logs]';
+                        
+                    case 'status':
+                        return this.getSystemStatus();
+                        
+                    case 'export':
+                        if (args[0] === 'logs') {
+                            this.exportLogs();
+                            return 'Logs exported to file';
+                        } else if (args[0] === 'errors') {
+                            this.exportErrors();
+                            return 'Errors exported to file';
+                        }
+                        return 'Usage: export [logs|errors]';
+                        
+                    case 'memory':
+                        return this.getMemoryInfo();
+                        
+                    case 'errors':
+                        return `Total errors: ${this.errors.length}`;
+                        
+                    case 'scan':
+                        if (window.contentScanner) {
+                            window.contentScanner.scanCurrentPage();
+                            return 'Page scan initiated';
+                        }
+                        return 'Scanner not available';
+                        
+                    case 'debug':
+                        if (args[0] === 'on') {
+                            window.debugMode = true;
+                            return 'Debug mode enabled';
+                        } else if (args[0] === 'off') {
+                            window.debugMode = false;
+                            return 'Debug mode disabled';
+                        }
+                        return `Debug mode: ${window.debugMode ? 'ON' : 'OFF'}`;
+                        
+                    default:
+                        throw new Error(`Unknown command: ${cmd}`);
+                }
+            }
+            
+            updateCommandHistory() {
+                const container = document.getElementById('commandHistory');
+                const recent = this.commandHistory.slice(-20).reverse();
+                
+                container.innerHTML = recent.map(entry => `
+                    <div class="command-entry">
+                        <div class="command-input-line">$ ${entry.input}</div>
+                        ${entry.output ? `<div class="command-output">${entry.output}</div>` : ''}
+                        ${entry.error ? `<div class="command-error">Error: ${entry.error}</div>` : ''}
+                    </div>
+                `).join('');
+                
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            loadCommandHistory() {
+                this.updateCommandHistory();
+            }
+            
+            // ================== UTILITY METHODS ==================
+            getSystemStatus() {
+                const status = {
+                    uptime: this.formatDuration(Date.now() - this.startTime),
+                    memory: this.getMemoryInfo(),
+                    errors: this.errors.length,
+                    logs: this.logs.length,
+                    tests: `${Array.from(this.testResults.values()).reduce((sum, suite) => sum + suite.passed, 0)}/${Array.from(this.testResults.values()).reduce((sum, suite) => sum + suite.total, 0)}`,
+                    online: navigator.onLine
+                };
+                
+                return Object.entries(status).map(([key, value]) => `${key}: ${value}`).join(', ');
+            }
+            
+            getMemoryInfo() {
+                if (!performance.memory) return 'Memory API not available';
+                
+                const used = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+                const total = (performance.memory.totalJSHeapSize / 1024 / 1024).toFixed(1);
+                const limit = (performance.memory.jsHeapSizeLimit / 1024 / 1024).toFixed(1);
+                
+                return `${used}MB / ${total}MB (limit: ${limit}MB)`;
+            }
+            
+            formatTime(timestamp) {
+                return new Date(timestamp).toLocaleTimeString();
+            }
+            
+            formatDuration(milliseconds) {
+                const seconds = Math.floor(milliseconds / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+                } else if (minutes > 0) {
+                    return `${minutes}m ${seconds % 60}s`;
+                } else {
+                    return `${seconds}s`;
+                }
+            }
+            
+            // ================== DATA EXPORT ==================
+            exportLogs() {
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    logs: this.logs,
+                    errors: this.errors,
+                    testResults: Object.fromEntries(this.testResults),
+                    performanceData: this.performanceData.slice(-50), // Last 50 measurements
+                    systemInfo: {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        cookieEnabled: navigator.cookieEnabled,
+                        onLine: navigator.onLine
+                    }
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `debug-logs-${Date.now()}.json`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                this.addLog('info', 'Debug logs exported');
+            }
+            
+            exportErrors() {
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    errors: this.errors,
+                    systemInfo: {
+                        userAgent: navigator.userAgent,
+                        url: window.location.href
+                    }
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `error-report-${Date.now()}.json`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                this.addLog('info', 'Error report exported');
+            }
+            
+            clearAllData() {
+                if (confirm('Are you sure you want to clear all debug data? This action cannot be undone.')) {
+                    this.logs = [];
+                    this.errors = [];
+                    this.testResults.clear();
+                    this.performanceData = [];
+                    this.commandHistory = [];
+                    
+                    this.updateRecentActivity();
+                    this.updateSystemLogs();
+                    this.loadErrorList();
+                    this.loadTestResults();
+                    this.updateCommandHistory();
+                    
+                    this.addLog('info', 'All debug data cleared');
+                }
+            }
+            
+            // ================== FEEDBACK SYSTEM ==================
+            submitFeedback() {
+                const issueType = document.getElementById('issueType').value;
+                const websiteUrl = document.getElementById('websiteUrl').value;
+                const description = document.getElementById('issueDescription').value;
+                const includeLogs = document.getElementById('includeLogs').checked;
+                
+                if (!description.trim()) {
+                    alert('Please provide a description of the issue.');
+                    return;
+                }
+                
+                const feedback = {
+                    type: issueType,
+                    url: websiteUrl,
+                    description: description,
+                    browser: document.getElementById('browserInfo').value,
+                    timestamp: new Date().toISOString(),
+                    logs: includeLogs ? {
+                        errors: this.errors.slice(-10),
+                        logs: this.logs.slice(-20),
+                        testResults: Object.fromEntries(this.testResults)
+                    } : null
+                };
+                
+                // In a real implementation, this would be sent to a server
+                console.log('Feedback submitted:', feedback);
+                
+                // Store locally for demonstration
+                const storedFeedback = JSON.parse(localStorage.getItem('debugFeedback') || '[]');
+                storedFeedback.push(feedback);
+                localStorage.setItem('debugFeedback', JSON.stringify(storedFeedback));
+                
+                this.addLog('success', 'Feedback submitted successfully');
+                this.loadRecentFeedback();
+                
+                // Clear form
+                document.getElementById('issueDescription').value = '';
+                document.getElementById('websiteUrl').value = '';
+            }
+            
+            loadRecentFeedback() {
+                const container = document.getElementById('recentFeedback');
+                const storedFeedback = JSON.parse(localStorage.getItem('debugFeedback') || '[]');
+                
+                if (storedFeedback.length === 0) {
+                    container.innerHTML = '<p style="color: #6b7280; font-style: italic;">No feedback submitted yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = storedFeedback.slice(-5).reverse().map(feedback => `
+                    <div style="background: #111827; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid #4facfe;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <strong style="color: #4facfe;">${feedback.type}</strong>
+                            <span style="color: #6b7280; font-size: 12px;">${new Date(feedback.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <div style="color: #e0e0e0; font-size: 13px; margin-bottom: 5px;">${feedback.description}</div>
+                        ${feedback.url ? `<div style="color: #9ca3af; font-size: 11px;">URL: ${feedback.url}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            // ================== DATA PERSISTENCE ==================
+            loadStoredData() {
+                try {
+                    const storedData = localStorage.getItem('debugConsoleData');
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        this.logs = data.logs || [];
+                        this.errors = data.errors || [];
+                        this.commandHistory = data.commandHistory || [];
+                    }
+                } catch (error) {
+                    console.warn('Failed to load stored debug data:', error);
+                }
+                
+                this.loadRecentFeedback();
+            }
+            
+            saveData() {
+                try {
+                    const data = {
+                        logs: this.logs.slice(-50), // Keep last 50 logs
+                        errors: this.errors.slice(-20), // Keep last 20 errors
+                        commandHistory: this.commandHistory.slice(-30) // Keep last 30 commands
+                    };
+                    
+                    localStorage.setItem('debugConsoleData', JSON.stringify(data));
+                } catch (error) {
+                    console.warn('Failed to save debug data:', error);
+                }
+            }
+            
+            // ================== CLEANUP ==================
+            destroy() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                }
+                
+                this.saveData();
+            }
+        }
+        
+        // ================== GLOBAL FUNCTIONS ==================
+        let debugConsole;
+        
+        function runFullTest() {
+            if (debugConsole) {
+                debugConsole.runAllTests();
+            }
+        }
+        
+        function runAllTests() {
+            runFullTest();
+        }
+        
+        function runCompatibilityTests() {
+            debugConsole?.addLog('info', 'Running compatibility tests...');
+            // Implementation would go here
+        }
+        
+        function runPerformanceTests() {
+            debugConsole?.addLog('info', 'Running performance tests...');
+            // Implementation would go here
+        }
+        
+        function clearErrors() {
+            debugConsole?.clearErrors();
+        }
+        
+        function exportLogs() {
+            debugConsole?.exportLogs();
+        }
+        
+        function exportErrors() {
+            debugConsole?.exportErrors();
+        }
+        
+        function clearAllData() {
+            debugConsole?.clearAllData();
+        }
+        
+        function handleCommandInput(event) {
+            if (event.key === 'Enter') {
+                debugConsole?.executeCommand(event.target.value);
+                event.target.value = '';
+            }
+        }
+        
+        function submitFeedback() {
+            debugConsole?.submitFeedback();
+        }
+        
+        // ================== INITIALIZATION ==================
+        document.addEventListener('DOMContentLoaded', () => {
+            debugConsole = new DebugConsoleController();
+            
+            // Add some sample data for demonstration
+            setTimeout(() => {
+                debugConsole.addLog('info', 'Debug console loaded successfully');
+                debugConsole.addLog('success', 'All systems operational');
+                debugConsole.addLog('warn', 'High memory usage detected');
+                debugConsole.addError({
+                    type: 'Sample Error',
+                    message: 'This is a sample error for demonstration',
+                    timestamp: Date.now()
+                });
+            }, 1000);
+            
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                debugConsole?.destroy();
+            });
+        });
+    </script>
+</body>
+</html>
